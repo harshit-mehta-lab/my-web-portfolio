@@ -1,0 +1,311 @@
+const ContactSection = () => {
+  const [formState, setFormState] = useState({ name: '', email: '', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSent, setIsSent] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    // Simulate API call
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setIsSent(true);
+      setFormState({ name: '', email: '', message: '' });
+      setTimeout(() => setIsSent(false), 3000);
+    }, 1500);
+  };
+
+  return (
+    <motion.div variants={containerVariants} initial="hidden" animate="visible" exit="hidden" className="h-full p-8 overflow-y-auto flex items-center justify-center">
+      <div className="max-w-4xl w-full grid grid-cols-1 md:grid-cols-2 gap-12">
+        <div>
+          <motion.h2 variants={itemVariants} className="text-3xl font-bold mb-6 flex items-center gap-3" style={{ color: 'var(--text-main)' }}>
+            <MessageSquare className="text-pink-400" /> Transmission
+          </motion.h2>
+          <motion.p variants={itemVariants} className="mb-8 text-lg" style={{ color: 'var(--text-muted)' }}>
+            Initiate a secure connection. Whether you have a question, a project proposal, or just want to connect, my inbox is open.
+          </motion.p>
+          
+          <motion.div variants={itemVariants} className="space-y-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-blue-500/10 text-blue-400"><Mail /></div>
+              <div>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-muted)' }}>EMAIL</p>
+                <a href="mailto:harshitmehta1012@gmail.com" className="hover:underline" style={{ color: 'var(--text-main)' }}>harshitmehta1012@gmail.com</a>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-purple-500/10 text-purple-400"><Linkedin /></div>
+              <div>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-muted)' }}>LINKEDIN</p>
+                <a href="https://www.linkedin.com/in/-harshit-mehta/" target="_blank" rel="noopener noreferrer" className="hover:underline" style={{ color: 'var(--text-main)' }}>/-harshit-mehta/</a>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-green-500/10 text-green-400"><MapPin /></div>
+              <div>
+                <p className="text-sm font-bold" style={{ color: 'var(--text-muted)' }}>LOCATION</p>
+                <p style={{ color: 'var(--text-main)' }}>Available for Remote & Relocation</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+
+        <motion.div variants={itemVariants} className="p-8 rounded-2xl border relative overflow-hidden" style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border)' }}>
+          <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+            <div>
+              <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-muted)' }}>IDENTITY</label>
+              <input 
+                type="text" 
+                required
+                value={formState.name}
+                onChange={(e) => setFormState({...formState, name: e.target.value})}
+                className="w-full p-3 rounded bg-transparent border focus:outline-none focus:ring-2 transition-all"
+                style={{ borderColor: 'var(--border)', color: 'var(--text-main)', focusRing: 'var(--primary)' }}
+                placeholder="Enter your name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-muted)' }}>COORDINATES</label>
+              <input 
+                type="email" 
+                required
+                value={formState.email}
+                onChange={(e) => setFormState({...formState, email: e.target.value})}
+                className="w-full p-3 rounded bg-transparent border focus:outline-none focus:ring-2 transition-all"
+                style={{ borderColor: 'var(--border)', color: 'var(--text-main)', focusRing: 'var(--primary)' }}
+                placeholder="Enter your email"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-muted)' }}>PAYLOAD</label>
+              <textarea 
+                required
+                rows={4}
+                value={formState.message}
+                onChange={(e) => setFormState({...formState, message: e.target.value})}
+                className="w-full p-3 rounded bg-transparent border focus:outline-none focus:ring-2 transition-all"
+                style={{ borderColor: 'var(--border)', color: 'var(--text-main)', focusRing: 'var(--primary)' }}
+                placeholder="Enter your message"
+              />
+            </div>
+            <button 
+              type="submit" 
+              disabled={isSubmitting || isSent}
+              className="w-full py-4 rounded font-bold flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-[0.98]"
+              style={{ backgroundColor: 'var(--primary)', color: '#000', opacity: isSubmitting ? 0.7 : 1 }}
+            >
+              {isSubmitting ? <Loader className="animate-spin" /> : isSent ? <Check /> : <Send />}
+              {isSubmitting ? 'TRANSMITTING...' : isSent ? 'TRANSMISSION COMPLETE' : 'SEND TRANSMISSION'}
+            </button>
+          </form>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+};
+
+const SettingsPanel = ({ isOpen, onClose, currentTheme, setTheme, currentMode, setMode }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.9, opacity: 0 }}
+        className="w-full max-w-md p-6 rounded-xl border shadow-2xl m-4"
+        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--primary)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--text-main)' }}>
+            <Settings className="animate-spin-slow" /> System Configuration
+          </h3>
+          <button onClick={onClose} className="p-1 rounded hover:bg-white/10"><X /></button>
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold mb-3" style={{ color: 'var(--text-muted)' }}>INTERFACE MODE</label>
+            <div className="grid grid-cols-2 gap-3">
+              {['dark', 'light'].map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setMode(mode)}
+                  className={`p-3 rounded border flex items-center justify-center gap-2 transition-all ${currentMode === mode ? 'ring-2 ring-[var(--primary)]' : 'opacity-50 hover:opacity-100'}`}
+                  style={{ backgroundColor: 'var(--bg-main)', borderColor: 'var(--border)', color: 'var(--text-main)' }}
+                >
+                  {mode === 'dark' ? <Moon size={16} /> : <Sun size={16} />}
+                  <span className="capitalize">{mode}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold mb-3" style={{ color: 'var(--text-muted)' }}>THEME PRESET</label>
+            <div className="grid grid-cols-1 gap-2">
+              {Object.values(THEME_PRESETS).map(theme => (
+                <button
+                  key={theme.id}
+                  onClick={() => setTheme(theme.id)}
+                  className={`p-3 rounded border flex items-center justify-between transition-all ${currentTheme === theme.id ? 'ring-2' : 'opacity-70 hover:opacity-100'}`}
+                  style={{ 
+                    backgroundColor: 'var(--bg-main)', 
+                    borderColor: currentTheme === theme.id ? theme.primary : 'var(--border)',
+                    color: 'var(--text-main)'
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-4 h-4 rounded-full shadow-[0_0_10px]" style={{ backgroundColor: theme.primary, boxShadow: `0 0 10px ${theme.primary}` }} />
+                    <span className="font-mono">{theme.name}</span>
+                  </div>
+                  <theme.icon size={16} style={{ color: theme.primary }} />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const App = () => {
+  const [activeTab, setActiveTab] = useState('home');
+  const [theme, setTheme] = useState('cyan');
+  const [mode, setMode] = useState('dark');
+  const [showSettings, setShowSettings] = useState(false);
+  const [profileImage, setProfileImage] = useState("https://media.licdn.com/dms/image/v2/D5603AQF58R7t85XlGA/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1709963181201?e=1743638400&v=beta&t=S9s-yW4wXy-kY_gyrK8K2vK55P5Rk_l5_l5_l5_l5");
+  const isOnline = useNetworkStatus();
+
+  // Apply Theme Variables
+  useEffect(() => {
+    const root = document.documentElement;
+    const t = THEME_PRESETS[theme];
+    const m = MODES[mode];
+
+    // Colors
+    root.style.setProperty('--primary', t.primary);
+    root.style.setProperty('--primary-glow', t.primaryGlow);
+    root.style.setProperty('--secondary', t.secondary);
+    root.style.setProperty('--primary-rgb', hexToRgb(t.primary));
+    root.style.setProperty('--secondary-rgb', hexToRgb(t.secondary));
+
+    // Mode
+    root.style.setProperty('--bg-main', m.bgMain);
+    root.style.setProperty('--bg-card', m.bgCard);
+    root.style.setProperty('--bg-nav', m.bgNav);
+    root.style.setProperty('--text-main', m.textMain);
+    root.style.setProperty('--text-muted', m.textMuted);
+    root.style.setProperty('--border', m.border);
+    root.style.setProperty('--shadow', m.shadow);
+
+  }, [theme, mode]);
+
+  const renderContent = () => {
+    switch(activeTab) {
+      case 'home': return <HeroSection setTab={setActiveTab} profileImage={profileImage} setProfileImage={setProfileImage} />;
+      case 'about': return <AboutSection />;
+      case 'projects': return <ProjectsSection />;
+      case 'certifications': return <CertificationsSection />;
+      case 'contact': return <ContactSection />;
+      default: return <HeroSection setTab={setActiveTab} profileImage={profileImage} setProfileImage={setProfileImage} />;
+    }
+  };
+
+  return (
+    <div className="flex h-screen w-full overflow-hidden font-sans transition-colors duration-500" style={{ backgroundColor: 'var(--bg-main)', color: 'var(--text-main)' }}>
+      <CustomCursor />
+      <MatrixBackground mode={mode} theme={theme} bgType={THEME_PRESETS[theme].bgType} />
+
+      {/* Mobile Nav Toggle */}
+      <div className="md:hidden fixed top-4 right-4 z-50">
+        <button 
+          onClick={() => setShowSettings(true)}
+          className="p-2 rounded-full bg-[var(--bg-card)] border border-[var(--border)] shadow-lg"
+        >
+          <Settings size={20} style={{ color: 'var(--primary)' }} />
+        </button>
+      </div>
+
+      {/* Sidebar Navigation */}
+      <nav className="hidden md:flex flex-col w-20 lg:w-64 border-r z-20 backdrop-blur-md transition-all duration-300" style={{ backgroundColor: 'var(--bg-nav)', borderColor: 'var(--border)' }}>
+        <div className="p-6 flex items-center justify-center lg:justify-start gap-3 border-b" style={{ borderColor: 'var(--border)' }}>
+          <div className="relative">
+            <div className="w-10 h-10 rounded bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center text-white font-bold text-xl shadow-lg">
+              H
+            </div>
+            <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-[var(--bg-nav)] ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
+          </div>
+          <span className="hidden lg:block font-bold text-xl tracking-tighter">PORTFOLIO</span>
+        </div>
+
+        <div className="flex-1 py-6 flex flex-col gap-2">
+          <NavItem id="home" label="DASHBOARD" icon={Grid} active={activeTab === 'home'} onClick={setActiveTab} />
+          <NavItem id="about" label="PROFILE" icon={Terminal} active={activeTab === 'about'} onClick={setActiveTab} />
+          <NavItem id="projects" label="PROJECTS" icon={Layers} active={activeTab === 'projects'} onClick={setActiveTab} />
+          <NavItem id="certifications" label="CREDENTIALS" icon={Award} active={activeTab === 'certifications'} onClick={setActiveTab} />
+          <NavItem id="contact" label="UPLINK" icon={MessageSquare} active={activeTab === 'contact'} onClick={setActiveTab} />
+        </div>
+
+        <div className="p-4 border-t" style={{ borderColor: 'var(--border)' }}>
+          <button 
+            onClick={() => setShowSettings(true)}
+            className="w-full p-3 rounded flex items-center justify-center lg:justify-start gap-3 transition-colors hover:bg-[var(--bg-card)]"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <Settings size={20} className="animate-spin-slow" />
+            <span className="hidden lg:block font-mono text-sm">SYSTEM CONFIG</span>
+          </button>
+        </div>
+      </nav>
+
+      {/* Main Content Area */}
+      <main className="flex-1 relative z-10 flex flex-col h-full overflow-hidden">
+        {/* Mobile Header */}
+        <div className="md:hidden h-16 border-b flex items-center px-4 justify-between backdrop-blur-md z-20" style={{ backgroundColor: 'var(--bg-nav)', borderColor: 'var(--border)' }}>
+           <div className="font-bold text-lg">HARSHIT MEHTA</div>
+           <div className="flex gap-2">
+             {/* Mobile Menu Items could go here or bottom bar */}
+           </div>
+        </div>
+
+        <div className="flex-1 relative overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={activeTab}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="h-full"
+            >
+              {renderContent()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        {/* Mobile Bottom Nav */}
+        <div className="md:hidden h-16 border-t flex items-center justify-around px-2 backdrop-blur-md z-20" style={{ backgroundColor: 'var(--bg-nav)', borderColor: 'var(--border)' }}>
+          <button onClick={() => setActiveTab('home')} className={`p-2 rounded ${activeTab === 'home' ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}><Grid size={20} /></button>
+          <button onClick={() => setActiveTab('about')} className={`p-2 rounded ${activeTab === 'about' ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}><Terminal size={20} /></button>
+          <button onClick={() => setActiveTab('projects')} className={`p-2 rounded ${activeTab === 'projects' ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}><Layers size={20} /></button>
+          <button onClick={() => setActiveTab('contact')} className={`p-2 rounded ${activeTab === 'contact' ? 'text-[var(--primary)]' : 'text-[var(--text-muted)]'}`}><MessageSquare size={20} /></button>
+        </div>
+      </main>
+
+      <SettingsPanel 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+        currentTheme={theme} 
+        setTheme={setTheme}
+        currentMode={mode}
+        setMode={setMode}
+      />
+    </div>
+  );
+};
+
+export default App;

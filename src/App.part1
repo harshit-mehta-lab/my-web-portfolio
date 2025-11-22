@@ -1,0 +1,451 @@
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence, useSpring, useMotionValue } from 'framer-motion';
+import { 
+  Cloud, 
+  Server, 
+  ShieldCheck, 
+  Cpu, 
+  Terminal, 
+  Zap, 
+  Menu,
+  X,
+  Linkedin,
+  Github,
+  Mail,
+  Lock,
+  Settings,
+  Moon,
+  Sun,
+  Check,
+  MessageSquare,
+  Send,
+  Award,
+  Layers,
+  Globe,
+  ExternalLink,
+  Loader,
+  WifiOff,
+  Play,
+  RotateCcw,
+  Upload,
+  Image as ImageIcon,
+  MapPin,
+  Phone,
+  Grid, 
+  Sparkles,
+  Activity
+} from 'lucide-react';
+
+/* --- UNIFIED THEME CONFIGURATION --- */
+
+const THEME_PRESETS = {
+  cyan: {
+    id: 'cyan',
+    name: 'System Core',
+    primary: '#22d3ee',      // cyan-400
+    primaryGlow: '#06b6d4',  // cyan-500
+    secondary: '#3b82f6',    // blue-500
+    bgType: 'grid',
+    icon: Grid,
+    desc: 'Standard Operations'
+  },
+  emerald: {
+    id: 'emerald',
+    name: 'Bio-Link',
+    primary: '#34d399',      // emerald-400
+    primaryGlow: '#10b981',  // emerald-500
+    secondary: '#14b8a6',    // teal-500
+    bgType: 'circuit',
+    icon: Cpu,
+    desc: 'Neural Network'
+  },
+  violet: {
+    id: 'violet',
+    name: 'Nebula OS',
+    primary: '#a78bfa',      // violet-400
+    primaryGlow: '#8b5cf6',  // violet-500
+    secondary: '#d946ef',    // fuchsia-500
+    bgType: 'nebula',
+    icon: Sparkles,
+    desc: 'Deep Space Uplink'
+  },
+  amber: {
+    id: 'amber',
+    name: 'Firewall',
+    primary: '#fbbf24',      // amber-400
+    primaryGlow: '#f59e0b',  // amber-500
+    secondary: '#ef4444',    // red-500
+    bgType: 'grid',
+    icon: ShieldCheck,
+    desc: 'Security Alert'
+  },
+  rgb: {
+    id: 'rgb',
+    name: 'RGB Mode',
+    primary: '#ef4444',      // Start color
+    primaryGlow: '#ef4444',
+    secondary: '#8b5cf6',
+    bgType: 'circuit',
+    icon: Activity,
+    desc: 'Chroma Cycle'
+  }
+};
+
+const MODES = {
+  dark: {
+    bgMain: '#020617',       // slate-950
+    bgCard: 'rgba(15, 23, 42, 0.6)', // slate-900/60
+    bgNav: 'rgba(15, 23, 42, 0.9)',
+    textMain: '#e2e8f0',     // slate-200
+    textMuted: '#94a3b8',    // slate-400
+    border: '#1e293b',       // slate-800
+    shadow: 'rgba(0,0,0,0.5)'
+  },
+  light: {
+    bgMain: '#f8fafc',       // slate-50
+    bgCard: 'rgba(255, 255, 255, 0.7)',
+    bgNav: 'rgba(255, 255, 255, 0.9)',
+    textMain: '#0f172a',     // slate-900
+    textMuted: '#475569',    // slate-600
+    border: '#cbd5e1',       // slate-300
+    shadow: 'rgba(0,0,0,0.1)'
+  }
+};
+
+/* --- DATA CONSTANTS --- */
+
+const BIO = {
+  heading: "Hi, I'm Harshit Mehta",
+  subheading: "Aspiring Cloud Developer & DevOps Engineer",
+  intro: "Aspiring Cloud Developer & DevOps Engineer. Currently honing my skills in scalable architecture and intelligent automation, with a passion for building reliable cloud solutions.",
+  paragraph1: "Currently pursuing my B.Tech in Computer Science and Engineering, I’ve gained practical exposure to Amazon Web Services (AWS) and developed a solid understanding of how different services interact to form reliable, high-performance architectures. I enjoy designing environments that balance performance, cost-efficiency, and security — while ensuring smooth automation and deployment workflows.",
+  paragraph2: "Through my academic journey, I’ve worked on several projects, including a Cloud-Based Learning Management System (LMS) using AWS, where I implemented a secure and scalable infrastructure with both public and private subnets. I also completed a Coursera certification on Packet Switching Networks and Algorithms, which enhanced my understanding of network design and data communication systems.",
+  paragraph3: "I’m continuously expanding my knowledge in DevOps, Linux system administration, and cloud security, while exploring how AI-driven services can be integrated into cloud platforms to achieve intelligent automation and optimized resource management.",
+  conclusion: "Driven by curiosity and a mindset of continuous learning, my goal is to design and manage smart, reliable, and future-ready cloud infrastructures that empower innovation and efficiency."
+};
+
+const CERTIFICATIONS = [
+  { title: "Oracle Cloud Infrastructure 2025 Certified DevOps Professional", issuer: "Oracle", date: "2025", icon: "cloud" },
+  { title: "Oracle Cloud Infrastructure 2025 Certified Foundations Associate", issuer: "Oracle", date: "2025", icon: "cloud" },
+  { title: "AWS Student Community Day Participation", issuer: "AWS", date: "Workshop", icon: "aws" },
+  { title: "Packet Switching Networks and Algorithms", issuer: "University of Colorado System", date: "Dec 2024", id: "3XXOLTCW31OK", icon: "network" },
+  { title: "Peer-to-Peer Protocols and Local Area Networks", issuer: "University of Colorado System", date: "Oct 2024", id: "72KYJ6W574GC", icon: "network" },
+  { title: "Digital Systems: From Logic Gates to Processors", issuer: "Universitat Autònoma de Barcelona", date: "Sep 2024", id: "IR6IXE07K3UP", icon: "cpu" },
+  { title: "Fundamentals of Network Communication", issuer: "University of Colorado System", date: "Sep 2024", id: "IUZ7PFL4BWC2", icon: "network" },
+  { title: "Introduction to Hardware and Operating Systems", issuer: "IBM", date: "Sep 2024", id: "GYWV28I6A2ZB", icon: "server" },
+  { title: "The Bits and Bytes of Computer Networking", issuer: "Google", date: "Sep 2024", id: "817YFL0IK50S", icon: "google" },
+  { title: "DevCreate Hackathon 2024", issuer: "GDG Jalandhar", date: "Apr 2024", id: "28507df4...", icon: "code" },
+  { title: "Responsive Web Developer", issuer: "freeCodeCamp", date: "Dec 2023", icon: "code" },
+  { title: "Computational Theory: Language Principle & Finite Automata", issuer: "Coursera", date: "N/A", icon: "cpu" },
+  { title: "Problem Solving (Basic/Advance)", issuer: "HackerRank/Other", date: "N/A", icon: "code" },
+];
+
+const SKILLS = [
+  "Cloud Computing", "AWS", "DevOps", "Linux Admin", "Network Security", 
+  "JavaScript", "HTML5/CSS3", "React", "Python", "Infrastructure as Code"
+];
+
+const PATENT_PROJECT = {
+  title: "AI Voice Phishing Detection System",
+  status: "Patent Pending",
+  description: "I’ve developed a prototype web profile for my patent-pending project. This project focuses on detecting and preventing AI-driven voice phishing using advanced audio analysis algorithms.",
+  tech: ["AI/ML", "Voice Analysis", "Cybersecurity", "Web Prototype"],
+  link: "https://lnkd.in/gqe3Jb25"
+};
+
+/* --- ANIMATION VARIANTS --- */
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { 
+    opacity: 1, 
+    y: 0,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 12
+    }
+  }
+};
+
+/* --- HELPER FUNCTIONS --- */
+
+const hexToRgb = (hex) => {
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : '0,0,0';
+};
+
+const hslToHex = (h, s, l) => {
+  s /= 100;
+  l /= 100;
+  let c = (1 - Math.abs(2 * l - 1)) * s,
+      x = c * (1 - Math.abs((h / 60) % 2 - 1)),
+      m = l - c / 2,
+      r = 0,
+      g = 0,
+      b = 0;
+
+  if (0 <= h && h < 60) { r = c; g = x; b = 0; }
+  else if (60 <= h && h < 120) { r = x; g = c; b = 0; }
+  else if (120 <= h && h < 180) { r = 0; g = c; b = x; }
+  else if (180 <= h && h < 240) { r = 0; g = x; b = c; }
+  else if (240 <= h && h < 300) { r = x; g = 0; b = c; }
+  else if (300 <= h && h < 360) { r = c; g = 0; b = x; }
+  r = Math.round((r + m) * 255).toString(16);
+  g = Math.round((g + m) * 255).toString(16);
+  b = Math.round((b + m) * 255).toString(16);
+
+  if (r.length == 1) r = "0" + r;
+  if (g.length == 1) g = "0" + g;
+  if (b.length == 1) b = "0" + b;
+
+  return "#" + r + g + b;
+}
+
+const useNetworkStatus = () => {
+  const [isOnline, setOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setOnline(true);
+    const handleOffline = () => setOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+};
+
+/* --- COMPONENTS --- */
+
+const CustomCursor = () => {
+  const cursorX = useMotionValue(-100);
+  const cursorY = useMotionValue(-100);
+  const springConfig = { damping: 25, stiffness: 700 };
+  const cursorXSpring = useSpring(cursorX, springConfig);
+  const cursorYSpring = useSpring(cursorY, springConfig);
+
+  useEffect(() => {
+    const moveCursor = (e) => {
+      cursorX.set(e.clientX - 16);
+      cursorY.set(e.clientY - 16);
+    };
+    window.addEventListener("mousemove", moveCursor);
+    return () => window.removeEventListener("mousemove", moveCursor);
+  }, []);
+
+  return (
+    <motion.div
+      className="fixed top-0 left-0 w-8 h-8 border-2 rounded-full pointer-events-none z-50 mix-blend-difference hidden md:block"
+      style={{ 
+        x: cursorXSpring, 
+        y: cursorYSpring,
+        borderColor: 'var(--primary)'
+      }}
+    >
+      <div className="w-2 h-2 rounded-full absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 animate-pulse" 
+           style={{ backgroundColor: 'var(--primary)' }} />
+    </motion.div>
+  );
+};
+
+const MatrixBackground = ({ mode, theme, bgType = 'grid' }) => {
+  return (
+    <div className="fixed inset-0 z-0 overflow-hidden" style={{ backgroundColor: 'var(--bg-main)' }}>
+      {/* Layer 1: Static Pattern */}
+      <div className="absolute inset-0 opacity-20" 
+        style={{
+          backgroundImage: 
+            bgType === 'circuit' 
+              ? `radial-gradient(var(--primary) 2px, transparent 2px), linear-gradient(var(--bg-main) 4px, transparent 0), linear-gradient(45deg, transparent 74px, transparent 75px, var(--primary) 75px, var(--primary) 76px, transparent 77px, transparent 109px), linear-gradient(-45deg, transparent 75px, transparent 76px, var(--primary) 76px, var(--primary) 77px, transparent 78px, transparent 109px)`
+              : bgType === 'nebula'
+              ? `radial-gradient(var(--primary), rgba(255,255,255,.1) 2px, transparent 4px), radial-gradient(var(--secondary), rgba(255,255,255,.1) 1px, transparent 2px)`
+              : `linear-gradient(rgba(var(--primary-rgb), 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--primary-rgb), 0.1) 1px, transparent 1px)`, // Default Grid
+          backgroundSize: 
+            bgType === 'circuit' ? '60px 60px, 4px 4px, 60px 60px, 60px 60px' 
+            : bgType === 'nebula' ? '350px 350px, 200px 200px'
+            : '40px 40px',
+          backgroundPosition:
+            bgType === 'nebula' ? '0 0, 40px 60px' : undefined
+        }}
+      />
+      
+      {/* Layer 2: Animation */}
+      <motion.div 
+        animate={{ 
+          backgroundPosition: bgType === 'nebula' ? ['0% 0%', '50% 50%'] : ['0% 0%', '100% 100%'],
+          scale: bgType === 'nebula' ? [1, 1.1, 1] : 1
+        }}
+        transition={{ duration: bgType === 'nebula' ? 30 : 20, repeat: Infinity, ease: "linear" }}
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: `radial-gradient(circle at center, ${mode === 'dark' ? 'var(--primary)' : '#000'} 0%, transparent 70%)`
+        }}
+      />
+    </div>
+  );
+};
+
+const NavItem = ({ id, label, icon: Icon, active, onClick }) => (
+  <button
+    onClick={() => onClick(id)}
+    className={`group relative flex items-center gap-3 px-6 py-4 w-full transition-all duration-300 overflow-hidden
+      ${active ? 'border-r-4' : 'hover:bg-[var(--bg-card)]'}`}
+    style={{
+      backgroundColor: active ? 'rgba(var(--primary-rgb), 0.1)' : 'transparent',
+      borderColor: 'var(--primary)',
+      color: active ? 'var(--primary)' : 'var(--text-muted)'
+    }}
+  >
+    <div 
+      className={`absolute inset-0 transform transition-transform duration-300 ${active ? 'translate-x-0' : '-translate-x-full group-hover:translate-x-0'}`} 
+      style={{ background: 'linear-gradient(90deg, rgba(var(--primary-rgb), 0.1), transparent)' }}
+    />
+    <Icon size={20} className={active ? 'animate-pulse' : 'group-hover:text-[var(--primary)]'} style={{ color: active ? 'var(--primary)' : undefined }} />
+    <span className="font-mono tracking-wider relative z-10">{label}</span>
+  </button>
+);
+
+const HeroSection = ({ setTab, profileImage, setProfileImage }) => {
+  const [imgError, setImgError] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleImageUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileImage(reader.result);
+        setImgError(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+      className="h-full overflow-y-auto p-4 md:p-8 relative scrollbar-hide"
+    >
+      <div className="min-h-full flex flex-col justify-center py-10 md:py-0">
+        <div className="flex flex-col-reverse md:flex-row items-center justify-center gap-8 md:gap-16 pb-10"> 
+          <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left z-10">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="inline-flex items-center gap-2 font-mono mb-4 px-3 py-1 rounded border w-fit"
+              style={{ 
+                color: 'var(--primary)', 
+                backgroundColor: 'rgba(var(--primary-rgb), 0.1)', 
+                borderColor: 'rgba(var(--primary-rgb), 0.3)' 
+              }}
+            >
+              <div className="w-2 h-2 rounded-full animate-ping" style={{ backgroundColor: 'var(--primary)' }} />
+              SYSTEM ONLINE
+            </motion.div>
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight" style={{ color: 'var(--text-main)' }}>
+              Hi, I'm <br/>
+              <span className="text-transparent bg-clip-text" style={{ backgroundImage: 'linear-gradient(to right, var(--primary), var(--secondary))' }}>
+                Harshit Mehta
+              </span>
+            </h1>
+            <p className="text-lg md:text-xl max-w-xl mb-8 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              {BIO.intro}
+            </p>
+            <div className="flex flex-wrap justify-center md:justify-start gap-4">
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setTab('projects')} 
+                className="font-bold py-3 px-8 rounded flex items-center gap-2 transition-transform"
+                style={{ backgroundColor: 'var(--primary)', color: '#000' }}
+              >
+                <Zap size={20} /> View Patents & Projects
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.05, borderColor: 'var(--primary)', color: 'var(--primary)' }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setTab('about')} 
+                className="border py-3 px-8 rounded font-mono transition-all"
+                style={{ 
+                  borderColor: 'var(--text-muted)', 
+                  color: 'var(--text-muted)' 
+                }}
+              >
+                ./initialize_profile
+              </motion.button>
+            </div>
+          </div>
+          <div className="flex-none relative group z-10">
+             <div className="absolute inset-0 bg-gradient-to-tr from-[var(--primary)] to-[var(--secondary)] blur-2xl opacity-30 rounded-full transform scale-90 group-hover:scale-100 transition-transform duration-500" />
+             <motion.div 
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="relative w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden border-2 shadow-2xl bg-slate-900 flex items-center justify-center cursor-pointer" 
+                style={{ borderColor: 'var(--primary)' }}
+                onClick={() => fileInputRef.current?.click()}
+             >
+                <div className="absolute inset-0 bg-[var(--primary)] mix-blend-color opacity-10 group-hover:opacity-0 transition-opacity z-10 duration-500 pointer-events-none" />
+                {!imgError ? (
+                  <img 
+                    src={profileImage} 
+                    alt="Harshit Mehta" 
+                    className="w-full h-full object-cover transition-all duration-500 scale-100 group-hover:scale-110"
+                    onError={() => setImgError(true)}
+                  />
+                ) : (
+                  <div className="text-center p-6 flex flex-col items-center group-hover:scale-105 transition-transform">
+                    <div className="p-4 rounded-full bg-slate-800 mb-3 border border-slate-700 group-hover:border-[var(--primary)] transition-colors">
+                      <Upload size={32} className="text-slate-400 group-hover:text-[var(--primary)]" />
+                    </div>
+                    <p className="text-sm font-bold text-slate-300 mb-1">ADD IMAGE</p>
+                    <p className="text-xs text-slate-500">Click to upload or replace</p>
+                  </div>
+                )}
+                <input 
+                  type="file" 
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden" 
+                />
+             </motion.div>
+             {!imgError && (
+               <div className="absolute -bottom-8 left-0 right-0 text-center opacity-0 group-hover:opacity-100 transition-opacity">
+                 <span className="text-xs font-mono bg-black/50 px-2 py-1 rounded text-slate-400">Click image to change</span>
+               </div>
+             )}
+          </div>
+        </div>
+        <div className="mt-auto border-t border-dashed pt-6 pb-4 flex flex-col md:flex-row justify-between items-center gap-4 w-full" style={{ borderColor: 'var(--border)' }}>
+          <button 
+            onClick={() => setTab('contact')}
+            className="flex items-center gap-2 text-sm transition-colors hover:underline group"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <MessageSquare size={16} className="group-hover:text-[var(--primary)] transition-colors" /> 
+            <span className="group-hover:text-[var(--text-main)] transition-colors">Have specific requirements? Send Feedback</span>
+          </button>
+          <p className="text-xs font-mono opacity-60 tracking-widest text-center md:text-right" style={{ color: 'var(--text-muted)' }}>
+            MADE IN CLOUD 2025 • ALL RIGHTS RESERVED
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  );
+};

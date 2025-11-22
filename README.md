@@ -1,97 +1,218 @@
-🌐 My Web Portfolio — React + Vite
+# @jridgewell/remapping
 
-Welcome to my personal web portfolio!
-This project showcases who I am, what I build, and how I think as a developer. Built using React + Vite, it’s designed to be fast, modern, and developer-friendly ⚡
+> Remap sequential sourcemaps through transformations to point at the original source code
 
-🚀 Tech Stack
+Remapping allows you to take the sourcemaps generated through transforming your code and "remap"
+them to the original source locations. Think "my minified code, transformed with babel and bundled
+with webpack", all pointing to the correct location in your original source code.
 
-⚛️ React — Component-based UI
+With remapping, none of your source code transformations need to be aware of the input's sourcemap,
+they only need to generate an output sourcemap. This greatly simplifies building custom
+transformations (think a find-and-replace).
 
-⚡ Vite — Ultra-fast dev environment + HMR
+## Installation
 
-🎨 Custom UI — Clean, minimal, responsive
+```sh
+npm install @jridgewell/remapping
+```
 
-📦 Modular Structure — Easy to scale and maintain
+## Usage
 
-🔥 Features
+```typescript
+function remapping(
+  map: SourceMap | SourceMap[],
+  loader: (file: string, ctx: LoaderContext) => (SourceMap | null | undefined),
+  options?: { excludeContent: boolean, decodedMappings: boolean }
+): SourceMap;
 
-Smooth & Responsive UI across all devices
+// LoaderContext gives the loader the importing sourcemap, tree depth, the ability to override the
+// "source" location (where child sources are resolved relative to, or the location of original
+// source), and the ability to override the "content" of an original source for inclusion in the
+// output sourcemap.
+type LoaderContext = {
+ readonly importer: string;
+ readonly depth: number;
+ source: string;
+ content: string | null | undefined;
+}
+```
 
-Fast Load Time thanks to Vite’s lightning-quick bundling
+`remapping` takes the final output sourcemap, and a `loader` function. For every source file pointer
+in the sourcemap, the `loader` will be called with the resolved path. If the path itself represents
+a transformed file (it has a sourcmap associated with it), then the `loader` should return that
+sourcemap. If not, the path will be treated as an original, untransformed source code.
 
-Modern Components built using best practices
+```js
+// Babel transformed "helloworld.js" into "transformed.js"
+const transformedMap = JSON.stringify({
+  file: 'transformed.js',
+  // 1st column of 2nd line of output file translates into the 1st source
+  // file, line 3, column 2
+  mappings: ';CAEE',
+  sources: ['helloworld.js'],
+  version: 3,
+});
 
-Clean Code with ESLint support
+// Uglify minified "transformed.js" into "transformed.min.js"
+const minifiedTransformedMap = JSON.stringify({
+  file: 'transformed.min.js',
+  // 0th column of 1st line of output file translates into the 1st source
+  // file, line 2, column 1.
+  mappings: 'AACC',
+  names: [],
+  sources: ['transformed.js'],
+  version: 3,
+});
 
-Portfolio Sections including
+const remapped = remapping(
+  minifiedTransformedMap,
+  (file, ctx) => {
 
-🧑‍💻 About Me
+    // The "transformed.js" file is an transformed file.
+    if (file === 'transformed.js') {
+      // The root importer is empty.
+      console.assert(ctx.importer === '');
+      // The depth in the sourcemap tree we're currently loading.
+      // The root `minifiedTransformedMap` is depth 0, and its source children are depth 1, etc.
+      console.assert(ctx.depth === 1);
 
-🧩 Skills
+      return transformedMap;
+    }
 
-🗂️ Projects
+    // Loader will be called to load transformedMap's source file pointers as well.
+    console.assert(file === 'helloworld.js');
+    // `transformed.js`'s sourcemap points into `helloworld.js`.
+    console.assert(ctx.importer === 'transformed.js');
+    // This is a source child of `transformed`, which is a source child of `minifiedTransformedMap`.
+    console.assert(ctx.depth === 2);
+    return null;
+  }
+);
 
-📬 Contact
+console.log(remapped);
+// {
+//   file: 'transpiled.min.js',
+//   mappings: 'AAEE',
+//   sources: ['helloworld.js'],
+//   version: 3,
+// };
+```
 
-🧭 About This Website
+In this example, `loader` will be called twice:
 
-This portfolio is my digital identity — a space where I put forward my work, creativity, and journey in tech.
-It reflects:
+1. `"transformed.js"`, the first source file pointer in the `minifiedTransformedMap`. We return the
+   associated sourcemap for it (its a transformed file, after all) so that sourcemap locations can
+   be traced through it into the source files it represents.
+2. `"helloworld.js"`, our original, unmodified source code. This file does not have a sourcemap, so
+   we return `null`.
 
-my interest in cloud computing,
+The `remapped` sourcemap now points from `transformed.min.js` into locations in `helloworld.js`. If
+you were to read the `mappings`, it says "0th column of the first line output line points to the 1st
+column of the 2nd line of the file `helloworld.js`".
 
-my path as a BTech CSE student,
+### Multiple transformations of a file
 
-and my dedication to building clean, functional, and future-ready apps.
+As a convenience, if you have multiple single-source transformations of a file, you may pass an
+array of sourcemap files in the order of most-recent transformation sourcemap first. Note that this
+changes the `importer` and `depth` of each call to our loader. So our above example could have been
+written as:
 
-Every page is crafted to be visually appealing, lightweight, and meaningful.
+```js
+const remapped = remapping(
+  [minifiedTransformedMap, transformedMap],
+  () => null
+);
 
-🛠️ Development Setup
-npm install
-npm run dev
+console.log(remapped);
+// {
+//   file: 'transpiled.min.js',
+//   mappings: 'AAEE',
+//   sources: ['helloworld.js'],
+//   version: 3,
+// };
+```
 
-Plugins you can use:
+### Advanced control of the loading graph
 
-@vitejs/plugin-react (Babel/oxc)
+#### `source`
 
-@vitejs/plugin-react-swc (SWC)
+The `source` property can overridden to any value to change the location of the current load. Eg,
+for an original source file, it allows us to change the location to the original source regardless
+of what the sourcemap source entry says. And for transformed files, it allows us to change the
+relative resolving location for child sources of the loaded sourcemap.
 
-If you want the React Compiler, check the official docs for installation.
+```js
+const remapped = remapping(
+  minifiedTransformedMap,
+  (file, ctx) => {
 
-📈 Future Enhancements
+    if (file === 'transformed.js') {
+      // We pretend the transformed.js file actually exists in the 'src/' directory. When the nested
+      // source files are loaded, they will now be relative to `src/`.
+      ctx.source = 'src/transformed.js';
+      return transformedMap;
+    }
 
-Adding animations 🎞️
+    console.assert(file === 'src/helloworld.js');
+    // We could futher change the source of this original file, eg, to be inside a nested directory
+    // itself. This will be reflected in the remapped sourcemap.
+    ctx.source = 'src/nested/transformed.js';
+    return null;
+  }
+);
 
-Dark/Light theme toggle 🌙☀️
+console.log(remapped);
+// {
+//   …,
+//   sources: ['src/nested/helloworld.js'],
+// };
+```
 
-Cloud deployment on AWS ☁️
 
-Backend integration for dynamic content 🔗
+#### `content`
 
-📌 Repository
+The `content` property can be overridden when we encounter an original source file. Eg, this allows
+you to manually provide the source content of the original file regardless of whether the
+`sourcesContent` field is present in the parent sourcemap. It can also be set to `null` to remove
+the source content.
 
-🔗 GitHub Repo:
-<https://github.com/harshit-mehta-lab/my-web-portfolio>
+```js
+const remapped = remapping(
+  minifiedTransformedMap,
+  (file, ctx) => {
 
-🙌 Closing Note
+    if (file === 'transformed.js') {
+      // transformedMap does not include a `sourcesContent` field, so usually the remapped sourcemap
+      // would not include any `sourcesContent` values.
+      return transformedMap;
+    }
 
-Thanks for checking out my project!
-I’m constantly learning, building, and improving — this portfolio grows along with me.
-Feel free to explore, contribute, or connect 😄
+    console.assert(file === 'helloworld.js');
+    // We can read the file to provide the source content.
+    ctx.content = fs.readFileSync(file, 'utf8');
+    return null;
+  }
+);
 
-# React + Vite
+console.log(remapped);
+// {
+//   …,
+//   sourcesContent: [
+//     'console.log("Hello world!")',
+//   ],
+// };
+```
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+### Options
 
-Currently, two official plugins are available:
+#### excludeContent
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+By default, `excludeContent` is `false`. Passing `{ excludeContent: true }` will exclude the
+`sourcesContent` field from the returned sourcemap. This is mainly useful when you want to reduce
+the size out the sourcemap.
 
-## React Compiler
+#### decodedMappings
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+By default, `decodedMappings` is `false`. Passing `{ decodedMappings: true }` will leave the
+`mappings` field in a [decoded state](https://github.com/rich-harris/sourcemap-codec) instead of
+encoding into a VLQ string.
